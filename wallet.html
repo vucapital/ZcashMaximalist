@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Kiểm tra ví ETH từ Mnemonic</title>
 
-  <!-- Load bằng Cloudflare CDN (chạy được trên GitHub Pages) -->
+  <!-- Cloudflare CDN -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/bip39/3.0.4/bip39.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.0/ethers.umd.min.js"></script>
 
@@ -53,7 +53,6 @@ async function checkWallet() {
     <p>Đang lấy số dư...</p>
   `;
 
-  // RPC không bị CORS, chạy được trên GitHub Pages
   const provider = new ethers.JsonRpcProvider("https://eth.llamarpc.com");
   const balanceWei = await provider.getBalance(address);
   const eth = ethers.formatEther(balanceWei);
