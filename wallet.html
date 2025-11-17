@@ -5,63 +5,77 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Kiểm tra ví ETH từ Mnemonic</title>
 
-  <!-- Cloudflare CDN -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/bip39/3.0.4/bip39.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.0/ethers.umd.min.js"></script>
+  <!-- CDN mới nhất 2025 -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/bip39/3.1.0/bip39.min.js"></script>
+  <script src="https://cdn.ethers.io/lib/ethers-6.13.2.umd.min.js"></script>
 
   <style>
-    body { font-family: Arial; padding:20px; background:#f4f6f9; }
-    .container { max-width:720px; margin:auto; background:white; padding:25px; border-radius:12px; }
-    textarea { width:100%; height:90px; border:2px solid #ccc; padding:12px; }
-    button { width:100%; margin-top:10px; padding:12px; background:#1a73e8; border:none; color:white; font-size:16px; border-radius:8px; cursor:pointer; }
-    .result { padding:15px; margin-top:20px; background:#f7f7f7; border-radius:8px; }
-    .address { font-family: monospace; color:#d32f2f; }
-    .balance { font-weight:bold; color:#2e7d32; font-size:18px; }
+    body{font-family:Arial;background:#f0f2f5;padding:20px}
+    .c{max-width:720px;margin:auto;background:white;padding:25px;border-radius:12px;box-shadow:0 4px 20px rgba(0,0,0,.1)}
+    textarea{width:100%;height:90px;padding:12px;font-size:16px;border:2px solid #ddd;border-radius:8px}
+    button{width:100%;margin-top:12px;padding:14px;background:#1a73e8;color:white;border:none;border-radius:8px;font-size:17px;cursor:pointer}
+    button:hover{background:#0d47a1}
+    .r{margin-top:20px;padding:15px;background:#f9f9f9;border-radius:8px}
+    .a{font:18px monospace;color:#d32f2f;word-break:break-all}
+    .b{font-weight:bold;color:#2e7d32;font-size:20px}
   </style>
 </head>
 <body>
-  <div class="container">
-    <h2>🔐 Kiểm tra ví ETH từ Mnemonic</h2>
-    <textarea id="mnemonic" placeholder="Nhập mnemonic 12 hoặc 24 từ..."></textarea>
-    <button onclick="checkWallet()">Kiểm tra số dư</button>
-    <div id="output" class="result"></div>
-  </div>
+<div class="c">
+  <h2 style="text-align:center">Kiểm tra ví ETH từ Mnemonic</h2>
+  <textarea id="mnemonic" placeholder="Dán 12 hoặc 24 từ mnemonic vào đây..."></textarea>
+  <button onclick="checkWallet()">Kiểm tra số dư ngay</button>
+  <div id="output" class="r"></div>
+</div>
 
 <script>
 async function checkWallet() {
   const mnemonic = document.getElementById("mnemonic").value.trim();
   const output = document.getElementById("output");
+  output.innerHTML = "Đang xử lý...";
 
   if (!mnemonic) {
-    output.innerHTML = "<p style='color:red'>Nhập mnemonic trước!</p>";
+    output.innerHTML = "<p style='color:red'>⚠️ Vui lòng nhập mnemonic!</p>";
     return;
   }
 
+  // Kiểm tra mnemonic hợp lệ
   if (!bip39.validateMnemonic(mnemonic)) {
-    output.innerHTML = "<p style='color:red'>Mnemonic không hợp lệ!</p>";
+    output.innerHTML = "<p style='color:red'>❌ Mnemonic không hợp lệ!</p>";
     return;
   }
 
-  const seed = await bip39.mnemonicToSeed(mnemonic);
-  const hd = ethers.HDNodeWallet.fromSeed(seed);
-  const wallet = hd.derivePath("m/44'/60'/0'/0/0");
-  const address = wallet.address;
+  try {
+    // === ĐÚNG CÁCH ethers v6 (2025) ===
+    const seed = await bip39.mnemonicToSeed(mnemonic);
+    const hdNode = ethers.HDNodeWallet.fromSeed(seed);           // vẫn dùng được
+    const wallet = hdNode.derivePath("m/44'/60'/0'/0/0");        // địa chỉ đầu tiên
+    const address = wallet.address;
 
-  output.innerHTML = `
-    <p>Địa chỉ ví:</p>
-    <p class="address">${address}</p>
-    <p>Đang lấy số dư...</p>
-  `;
+    output.innerHTML = `
+      <p>Địa chỉ ví:</p>
+      <p class="a">${address}</p>
+      <p>Đang lấy số dư từ blockchain...</p>
+    `;
 
-  const provider = new ethers.JsonRpcProvider("https://eth.llamarpc.com");
-  const balanceWei = await provider.getBalance(address);
-  const eth = ethers.formatEther(balanceWei);
+    // Dùng RPC miễn phí + nhanh (không cần API key)
+    const provider = new ethers.JsonRpcProvider("https://eth.llamarpc.com");
+    const balanceWei = await provider.getBalance(address);
+    const eth = ethers.formatEther(balanceWei);
 
-  output.innerHTML = `
-    <p>Địa chỉ ví:</p>
-    <p class="address">${address}</p>
-    <p class="balance">Số dư: ${parseFloat(eth).toFixed(6)} ETH</p>
-  `;
+    output.innerHTML = `
+      <p>Địa chỉ ví:</p>
+      <p class="a">${address}</p>
+      <p class="b">${parseFloat(eth).toFixed(6)} ETH</p>
+      <p style="margin-top:15px;font-size:14px;color:#666">
+        Dữ liệu real-time từ Ethereum Mainnet<br>
+        <a href="https://etherscan.io/address/${address}" target="_blank">Xem trên Etherscan ↗</a>
+      </p>
+    `;
+
+  } catch (e) {
+    output.innerHTML = `<p style='color:red'>Lỗi: ${e.message}</p>`;
+  }
 }
 </script>
 </body>
