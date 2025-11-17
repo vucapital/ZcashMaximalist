@@ -5,8 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Kiểm tra ví ETH từ Mnemonic</title>
 
-  <script src="https://cdn.jsdelivr.net/npm/bip39@3.0.4/dist/bip39.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/ethers@6.7.1/dist/ethers.min.js"></script>
+  <!-- Load bằng Cloudflare CDN (chạy được trên GitHub Pages) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/bip39/3.0.4/bip39.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.0/ethers.umd.min.js"></script>
 
   <style>
     body { font-family: Arial; padding:20px; background:#f4f6f9; }
@@ -42,8 +43,8 @@ async function checkWallet() {
   }
 
   const seed = await bip39.mnemonicToSeed(mnemonic);
-  const hdnode = ethers.HDNodeWallet.fromSeed(seed);
-  const wallet = hdnode.derivePath("m/44'/60'/0'/0/0");
+  const hd = ethers.HDNodeWallet.fromSeed(seed);
+  const wallet = hd.derivePath("m/44'/60'/0'/0/0");
   const address = wallet.address;
 
   output.innerHTML = `
@@ -52,7 +53,7 @@ async function checkWallet() {
     <p>Đang lấy số dư...</p>
   `;
 
-  // Đây là provider RPC KHÔNG bị chặn CORS
+  // RPC không bị CORS, chạy được trên GitHub Pages
   const provider = new ethers.JsonRpcProvider("https://eth.llamarpc.com");
   const balanceWei = await provider.getBalance(address);
   const eth = ethers.formatEther(balanceWei);
@@ -66,4 +67,3 @@ async function checkWallet() {
 </script>
 </body>
 </html>
-
