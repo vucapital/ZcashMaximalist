@@ -1,33 +1,28 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Kiểm tra ví ETH từ Mnemonic</title>
 
-  <!-- Load thư viện từ CDN -->
   <script src="https://cdn.jsdelivr.net/npm/bip39@3.0.4/dist/bip39.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/ethers@6.7.1/dist/ethers.min.js"></script>
 
   <style>
-    body { font-family: Arial, sans-serif; padding: 20px; background: #f4f6f9; }
-    .container { max-width: 720px; margin: auto; background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
-    textarea { width: 100%; height: 90px; border: 2px solid #ccc; border-radius: 8px; padding: 12px; font-size: 16px; }
-    button { margin-top: 10px; width: 100%; padding: 12px; font-size: 16px; border: none; color: white; background: #1a73e8; border-radius: 8px; cursor: pointer; font-weight: bold; }
-    button:hover { background: #0d47a1; }
-    .result { padding: 15px; margin-top: 20px; background: #f7f7f7; border-radius: 8px; }
-    .address { font-family: monospace; color: #d32f2f; }
-    .balance { font-weight: bold; color: #2e7d32; font-size: 18px; }
+    body { font-family: Arial; padding:20px; background:#f4f6f9; }
+    .container { max-width:720px; margin:auto; background:white; padding:25px; border-radius:12px; }
+    textarea { width:100%; height:90px; border:2px solid #ccc; padding:12px; }
+    button { width:100%; margin-top:10px; padding:12px; background:#1a73e8; border:none; color:white; font-size:16px; border-radius:8px; cursor:pointer; }
+    .result { padding:15px; margin-top:20px; background:#f7f7f7; border-radius:8px; }
+    .address { font-family: monospace; color:#d32f2f; }
+    .balance { font-weight:bold; color:#2e7d32; font-size:18px; }
   </style>
 </head>
 <body>
   <div class="container">
     <h2>🔐 Kiểm tra ví ETH từ Mnemonic</h2>
-    <p>Chỉ dùng online. Không lưu dữ liệu.</p>
-
     <textarea id="mnemonic" placeholder="Nhập mnemonic 12 hoặc 24 từ..."></textarea>
     <button onclick="checkWallet()">Kiểm tra số dư</button>
-
     <div id="output" class="result"></div>
   </div>
 
@@ -41,13 +36,11 @@ async function checkWallet() {
     return;
   }
 
-  // Kiểm tra mnemonic có hợp lệ không
   if (!bip39.validateMnemonic(mnemonic)) {
     output.innerHTML = "<p style='color:red'>Mnemonic không hợp lệ!</p>";
     return;
   }
 
-  // Tạo seed → ví
   const seed = await bip39.mnemonicToSeed(mnemonic);
   const hdnode = ethers.HDNodeWallet.fromSeed(seed);
   const wallet = hdnode.derivePath("m/44'/60'/0'/0/0");
@@ -59,12 +52,10 @@ async function checkWallet() {
     <p>Đang lấy số dư...</p>
   `;
 
-  // Lấy số dư ETH từ Etherscan API
-  const eth = await fetch(
-    `https://api.etherscan.io/api?module=account&action=balance&address=${address}&tag=latest&apikey=YourApiKeyNotNeeded`
-  )
-    .then(r => r.json())
-    .then(d => ethers.formatEther(d.result));
+  // Đây là provider RPC KHÔNG bị chặn CORS
+  const provider = new ethers.JsonRpcProvider("https://eth.llamarpc.com");
+  const balanceWei = await provider.getBalance(address);
+  const eth = ethers.formatEther(balanceWei);
 
   output.innerHTML = `
     <p>Địa chỉ ví:</p>
@@ -73,6 +64,6 @@ async function checkWallet() {
   `;
 }
 </script>
-
 </body>
 </html>
+
