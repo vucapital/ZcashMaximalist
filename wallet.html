@@ -5,8 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Kiểm tra ví ETH từ Mnemonic</title>
 
-  <!-- CDN mới nhất 2025 -->
+  <!-- Thư viện bip39 để kiểm tra mnemonic -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/bip39/3.1.0/bip39.min.js"></script>
+  <!-- Thư viện ethers phiên bản 6 -->
   <script src="https://cdn.ethers.io/lib/ethers-6.13.2.umd.min.js"></script>
 
   <style>
@@ -30,26 +31,22 @@
 
 <script>
 async function checkWallet() {
-  const mnemonic = document.getElementById("mnemonic").value.trim();
+  const phrase = document.getElementById("mnemonic").value.trim();
   const output = document.getElementById("output");
   output.innerHTML = "Đang xử lý...";
 
-  if (!mnemonic) {
+  if (!phrase) {
     output.innerHTML = "<p style='color:red'>⚠️ Vui lòng nhập mnemonic!</p>";
     return;
   }
 
-  // Kiểm tra mnemonic hợp lệ
-  if (!bip39.validateMnemonic(mnemonic)) {
+  if (!bip39.validateMnemonic(phrase)) {
     output.innerHTML = "<p style='color:red'>❌ Mnemonic không hợp lệ!</p>";
     return;
   }
 
   try {
-    // === ĐÚNG CÁCH ethers v6 (2025) ===
-    const seed = await bip39.mnemonicToSeed(mnemonic);
-    const hdNode = ethers.HDNodeWallet.fromSeed(seed);           // vẫn dùng được
-    const wallet = hdNode.derivePath("m/44'/60'/0'/0/0");        // địa chỉ đầu tiên
+    const wallet = ethers.Wallet.fromPhrase(phrase);
     const address = wallet.address;
 
     output.innerHTML = `
@@ -58,7 +55,6 @@ async function checkWallet() {
       <p>Đang lấy số dư từ blockchain...</p>
     `;
 
-    // Dùng RPC miễn phí + nhanh (không cần API key)
     const provider = new ethers.JsonRpcProvider("https://eth.llamarpc.com");
     const balanceWei = await provider.getBalance(address);
     const eth = ethers.formatEther(balanceWei);
